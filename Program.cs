@@ -9,44 +9,12 @@ using Microsoft.Office.Interop.Excel;
 using _Excel = Microsoft.Office.Interop.Excel;
 
 
-namespace Excel_with_C_Sharp
+namespace GenPerfData
 {
-   class Excel
-   {
-      // Create an excel application object, workbook oject and worksheet object
-      _Application excel = new _Excel.Application();
-      Workbook workbook;
-      Worksheet worksheet;
-
-      // Method creates a new Excel file by creating a new Excel workbook with a single worksheet
-      public void NewFile()
-      {
-         this.workbook = excel.Workbooks.Add(XlWBATemplate.xlWBATWorksheet);
-         this.worksheet = this.workbook.Worksheets[1];
-      }
-
-      // Method adds a new worksheet to the existing workbook 
-      public Worksheet NewSheet()
-      {
-         return excel.Worksheets.Add(After: this.worksheet);
-      }
-
-      // Method saves workbook at a specified path
-      public void SaveAs(string path)
-      {
-         workbook.SaveAs(path);
-      }
-   }
 
 
    class Program
    {
-
-      _Application _excel = new _Excel.Application();
-      Workbook _workbook;
-      Worksheet _worksheet;
-
-
       static void Main(string[] args)
       {
          var program = new Program();
@@ -54,10 +22,17 @@ namespace Excel_with_C_Sharp
       }
 
 
+
+
+      _Application _excel = new _Excel.Application();
+      Workbook _workbook;
+      Worksheet _worksheet;
+
       public void NewFile()
       {
          _workbook = _excel.Workbooks.Add(XlWBATemplate.xlWBATWorksheet);
          _worksheet = _workbook.Worksheets[1];
+         _worksheet.Name = "Worksheet0";
       }
 
       // Method adds a new worksheet to the existing workbook 
@@ -75,6 +50,10 @@ namespace Excel_with_C_Sharp
          // Add a new sheet to the workbook
          var sheet = NewSheet();
          sheet.Name = "MyWorksheet";
+         sheet = NewSheet();
+         sheet.Name = "MyWorksheetAgain";
+
+
 
          var path = Directory.GetCurrentDirectory();
          var filePath = $"{path}/MyTestData.xlsx";
