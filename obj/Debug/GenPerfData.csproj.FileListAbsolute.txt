@@ -1,8 +1,0 @@
-C:\ws\GenPerfData\bin\Debug\GenPerfData.exe.config
-C:\ws\GenPerfData\bin\Debug\GenPerfData.exe
-C:\ws\GenPerfData\bin\Debug\GenPerfData.pdb
-C:\ws\GenPerfData\obj\Debug\GenPerfData.csprojAssemblyReference.cache
-C:\ws\GenPerfData\obj\Debug\GenPerfData.csproj.ResolveComReference.cache
-C:\ws\GenPerfData\obj\Debug\GenPerfData.csproj.CoreCompileInputs.cache
-C:\ws\GenPerfData\obj\Debug\GenPerfData.exe
-C:\ws\GenPerfData\obj\Debug\GenPerfData.pdb
