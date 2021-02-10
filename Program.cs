@@ -21,6 +21,7 @@ namespace GenPerfData
       public string ZoneId;
       public bool Active;
       public FacilitySchedule Schedule;
+      public List<Device> Devices;
    }
 
    class FacilityScheduledEvent
@@ -166,7 +167,7 @@ namespace GenPerfData
       }
 
 
-      private int _numDevices = 2 ;
+      private int _numDevices = 10 ;
       private int _numFacilities = 2;
 
       _Application _excel = new _Excel.Application();
@@ -181,25 +182,46 @@ namespace GenPerfData
 
       public void CreateData()
       {
+         var states = new string[]
+         {
+            "PA",
+            "NC",
+            "CO",
+            "GA"
+         };
 
+         var timeZones = new string[]
+         {
+            "US/Mountain",
+            "US/Eastern",
+            "US/Central"
+         };
+
+         int timeZoneIndex = 0;
+         int stateIndex = 0;
          for (int nFacility = 1; nFacility <= _numFacilities; ++nFacility)
          {
+            var timeZone = timeZones[timeZoneIndex];
+            timeZoneIndex = ++timeZoneIndex % timeZones.Length;
+
+            var state = states[stateIndex];
+            stateIndex = ++stateIndex % states.Length;
+
             var facility = new Facility()
             {
                Id = String.Format("Site{0:000}", nFacility),
                Name = String.Format("Facility{0:000}", nFacility),
-               City = "ACity",
-               State = "AState",
-               ZoneId = "US/Mountain",
+               City = String.Format("City{0:000}", nFacility),
+               State = state,
+               ZoneId = timeZone,
                Active = true
             };
             _facilities.Add(facility);
 
-
             // create scheduled events
             var schedule = new FacilitySchedule();
             facility.Schedule = schedule;
-
+            int start = 0;
             for (int day = 1; day <= 7; ++day)
             {
                var scheduledEvent = new FacilityScheduledEvent()
@@ -207,21 +229,26 @@ namespace GenPerfData
 
                   FacilityId = facility.Id,
                   DayOfWeek = day,
-                  DataTransmissionStart = "00:00",
+                  DataTransmissionStart = String.Format("00:{0:00}",start++),
                   DurationHours = 1
                };
                schedule.Add(scheduledEvent);
             }
          }
 
+         // alternate putting devices into the facility
+
          // create devices
+         var facilityIndex = 0;
          for (int nDevice = 1; nDevice <= _numDevices; ++nDevice)
          {
+            var facility = _facilities[facilityIndex];
+            facilityIndex = ++facilityIndex % _facilities.Count();
             var device = new Device()
             {
                Name = String.Format("Device{0:000}", nDevice),
                SerialNumber = String.Format("1X{0:00000}", nDevice),
-               FacilityId = "Denver",
+               FacilityId = facility.Id,
                Active = true,
             };
             _devices.Add(device);
