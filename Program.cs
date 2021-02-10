@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Office.Interop.Excel;
-
+using RandomNameGeneratorLibrary;
 using _Excel = Microsoft.Office.Interop.Excel;
 
 
@@ -21,7 +22,6 @@ namespace GenPerfData
       public string ZoneId;
       public bool Active;
       public FacilitySchedule Schedule;
-      public List<Device> Devices;
    }
 
    class FacilityScheduledEvent
@@ -55,6 +55,10 @@ namespace GenPerfData
       public DevicesWorksheet(Worksheet worksheet)
       {
          _worksheet = worksheet;
+      }
+
+      public void Init()
+      {
          _worksheet.Name = "Devices";
          _worksheet.Cells[1, DeviceNameCell] = "Device name";
          _worksheet.Cells[1, SerialCell] = "Serial number";
@@ -92,6 +96,10 @@ namespace GenPerfData
       public FacilitiesWorkSheet(Worksheet worksheet)
       {
          _worksheet = worksheet;
+      }
+
+      public void Init()
+      {
          _worksheet.Name = "Facilities";
          _worksheet.Cells[1, IdCell] = "Facility ID";
          _worksheet.Cells[1, NameCell] = "Facility name";
@@ -133,8 +141,11 @@ namespace GenPerfData
       public FacilitiesScheduleWorksheet(Worksheet worksheet)
       {
          _worksheet = worksheet;
-         _worksheet.Name = "Facilities schedule";
+      }
 
+      public void Init()
+      {
+         _worksheet.Name = "Facilities schedule";
          _worksheet.Cells[1, IdCell] = "Facility ID";
          _worksheet.Cells[1, DayOfWeekCell] = "Day of week";
          _worksheet.Cells[1, TxStartCell] = "Data transmission start (24 hour clock)";
@@ -167,8 +178,8 @@ namespace GenPerfData
       }
 
 
-      private int _numDevices = 10 ;
-      private int _numFacilities = 2;
+      private int _numDevices = 50 ;
+      private int _numFacilities = 50;
 
       _Application _excel = new _Excel.Application();
       Workbook _workbook;
@@ -182,20 +193,11 @@ namespace GenPerfData
 
       public void CreateData()
       {
-         var states = new string[]
-         {
-            "PA",
-            "NC",
-            "CO",
-            "GA"
-         };
+         var states = SourceData.States;
+         var timeZones = SourceData.TimeZones;
 
-         var timeZones = new string[]
-         {
-            "US/Mountain",
-            "US/Eastern",
-            "US/Central"
-         };
+         var placeGenerator = new PlaceNameGenerator();
+         var name = placeGenerator.GenerateRandomPlaceName();
 
          int timeZoneIndex = 0;
          int stateIndex = 0;
@@ -207,11 +209,13 @@ namespace GenPerfData
             var state = states[stateIndex];
             stateIndex = ++stateIndex % states.Length;
 
+            var city = placeGenerator.GenerateRandomPlaceName();
+
             var facility = new Facility()
             {
                Id = String.Format("Site{0:000}", nFacility),
                Name = String.Format("Facility{0:000}", nFacility),
-               City = String.Format("City{0:000}", nFacility),
+               City = city,
                State = state,
                ZoneId = timeZone,
                Active = true
@@ -256,22 +260,55 @@ namespace GenPerfData
       }
 
 
-      public void Run(string[] args)
+      private void LoadWorksheets()
       {
-         CreateData();
+         Application excel = new Application();
+         var cwd = Directory.GetCurrentDirectory();
+         var fullPath = $"{cwd}\\template.xlsx";
+         _workbook = excel.Workbooks.Open(fullPath);
+         var worksheets = _workbook.Worksheets;
 
+         foreach (var ws in worksheets)
+         {
+            Worksheet worksheet = (Worksheet) ws;
+            if (worksheet.Name == "Facilities")
+            {
+               _facilitiesWorksheet = new FacilitiesWorkSheet(worksheet);
+            }
+            else if (worksheet.Name == "Devices")
+            {
+               _devicesWorksheet = new DevicesWorksheet(worksheet);
+            }
+            else if (worksheet.Name == "Facilities schedule")
+            {
+               _facilitiesScheduleWorksheet = new FacilitiesScheduleWorksheet(worksheet);
+            }
+            Debug.WriteLine($"{worksheet.Name}");
+         }
+      }
+
+      private void CreateWorksheets()
+      {
          _workbook = _excel.Workbooks.Add(XlWBATemplate.xlWBATWorksheet);
 
          // create worksheets
          var worksheet = _workbook.Worksheets[1];
          _facilitiesWorksheet = new FacilitiesWorkSheet(worksheet);
+         _facilitiesWorksheet.Init();
 
          worksheet = _excel.Worksheets.Add(After: worksheet);
          _facilitiesScheduleWorksheet = new FacilitiesScheduleWorksheet(worksheet);
+         _facilitiesScheduleWorksheet.Init();
 
          worksheet = _excel.Worksheets.Add(After: worksheet);
          _devicesWorksheet = new DevicesWorksheet(worksheet);
+         _devicesWorksheet.Init();
+      }
 
+      public void Run(string[] args)
+      {
+         CreateData();
+         LoadWorksheets();
 
          _devicesWorksheet.AddDevices(_devices);
          _facilitiesWorksheet.AddFacilities(_facilities);
