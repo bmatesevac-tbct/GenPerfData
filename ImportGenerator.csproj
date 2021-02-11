@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{283BD5E7-717A-45A1-8212-B7F22B222FEB}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>GenPerfData</RootNamespace>
-    <AssemblyName>GenPerfData</AssemblyName>
+    <RootNamespace>ImportGenerator</RootNamespace>
+    <AssemblyName>ImportGenerator</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

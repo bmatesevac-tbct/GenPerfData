@@ -10,7 +10,7 @@ using RandomNameGeneratorLibrary;
 using _Excel = Microsoft.Office.Interop.Excel;
 
 
-namespace GenPerfData
+namespace ImportGenerator
 {
 
    class Facility
@@ -260,7 +260,7 @@ namespace GenPerfData
       }
 
 
-      private void LoadWorksheets()
+      private void LoadWorksheetsFromTemplate()
       {
          Application excel = new Application();
          var cwd = Directory.GetCurrentDirectory();
@@ -287,7 +287,7 @@ namespace GenPerfData
          }
       }
 
-      private void CreateWorksheets()
+      private void CreateWorksheetsFromScratch()
       {
          _workbook = _excel.Workbooks.Add(XlWBATemplate.xlWBATWorksheet);
 
@@ -308,7 +308,7 @@ namespace GenPerfData
       public void Run(string[] args)
       {
          CreateData();
-         LoadWorksheets();
+         LoadWorksheetsFromTemplate();
 
          _devicesWorksheet.AddDevices(_devices);
          _facilitiesWorksheet.AddFacilities(_facilities);
@@ -318,8 +318,11 @@ namespace GenPerfData
             _facilitiesScheduleWorksheet.AddSchedule(facility.Schedule);
          }
 
+
+         var ts = DateTime.Now;
+         var fileName = String.Format("{0}-{1:00}-{2:00}-{3:00}-{4:00}-{5:00}.xlsx", ts.Year, ts.Month, ts.Day, ts.Hour, ts.Minute, ts.Second);
          var path = Directory.GetCurrentDirectory();
-         var filePath = $"{path}/MyTestData.xlsx";
+         var filePath = $"{path}/{fileName}";
 
          File.Delete(filePath);
          _workbook.SaveAs(filePath);
