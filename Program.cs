@@ -7,8 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Office.Interop.Excel;
 using RandomNameGeneratorLibrary;
+using CommandLine;
 using _Excel = Microsoft.Office.Interop.Excel;
-
 
 namespace ImportGenerator
 {
@@ -32,7 +32,7 @@ namespace ImportGenerator
       public int DurationHours;
    }
 
-   class FacilitySchedule : List<FacilityScheduledEvent> 
+   class FacilitySchedule : List<FacilityScheduledEvent>
    {
    }
 
@@ -170,25 +170,79 @@ namespace ImportGenerator
    class Program
    {
 
-
-      static void Main(string[] args)
+      class Options
       {
-         var program = new Program();
-         program.Run(args);
+         [Option('v', "verbose", Required = false, HelpText = "Set output to verbose messages.")]
+         public bool Verbose { get; set; }
+         [Option('d', "devices", Required = true, HelpText = "Specify number of devices.")]
+         public int NumDevices { get; set; }
+         [Option('f', "facilities", Required = true, HelpText = "Specify number of facilities.")]
+         public int NumFacilities { get; set; }
+         [Option('s', "serial", Required = false, HelpText = "Specify the serial number prefix.")]
+         public string SerialPrefix { get; set; } = "1X";
       }
 
 
-      private int _numDevices = 50 ;
-      private int _numFacilities = 50;
+      static void Main(params string[] args)
+      {
+         Parser.Default.ParseArguments<Options>(args)
+            .WithParsed<Options>(Run);
+      }
+
+      static void Run(Options options)
+      {
+         var program = new Program(options);
+         program.Run();
+      }
 
       _Application _excel = new _Excel.Application();
       Workbook _workbook;
+      private Options _options;
       private FacilitiesWorkSheet _facilitiesWorksheet;
       private FacilitiesScheduleWorksheet _facilitiesScheduleWorksheet;
       private DevicesWorksheet _devicesWorksheet;
 
       private List<Facility> _facilities = new List<Facility>();
       private List<Device> _devices = new List<Device>();
+
+      Program(Options options)
+      {
+         _options = options;
+      }
+
+      public void Run()
+      {
+         var ts = DateTime.Now;
+         var fileName = String.Format("{0}-{1:00}-{2:00}-{3:00}-{4:00}-{5:00}.xlsx", ts.Year, ts.Month, ts.Day, ts.Hour, ts.Minute, ts.Second);
+         var path = Directory.GetCurrentDirectory();
+         var filePath = $"{path}/{fileName}";
+
+         Console.WriteLine($"Generating import document:");
+         Console.WriteLine($" Devices:    {_options.NumDevices}");
+         Console.WriteLine($" Facilities: {_options.NumFacilities}");
+         Console.WriteLine($" S/N Prefix: {_options.SerialPrefix}");
+         Console.WriteLine($" Output:     {filePath}");
+
+
+         CreateData();
+         LoadWorksheetsFromTemplate();
+
+         _devicesWorksheet.AddDevices(_devices);
+         _facilitiesWorksheet.AddFacilities(_facilities);
+
+         foreach (var facility in _facilities)
+         {
+            _facilitiesScheduleWorksheet.AddSchedule(facility.Schedule);
+         }
+
+
+
+         File.Delete(filePath);
+         _workbook.SaveAs(filePath);
+
+         // Closing the file
+         _workbook.Close();
+      }
 
 
       public void CreateData()
@@ -197,11 +251,12 @@ namespace ImportGenerator
          var timeZones = SourceData.TimeZones;
 
          var placeGenerator = new PlaceNameGenerator();
-         var name = placeGenerator.GenerateRandomPlaceName();
+
 
          int timeZoneIndex = 0;
          int stateIndex = 0;
-         for (int nFacility = 1; nFacility <= _numFacilities; ++nFacility)
+
+         for (int nFacility = 1; nFacility <= _options.NumFacilities; ++nFacility)
          {
             var timeZone = timeZones[timeZoneIndex];
             timeZoneIndex = ++timeZoneIndex % timeZones.Length;
@@ -233,25 +288,25 @@ namespace ImportGenerator
 
                   FacilityId = facility.Id,
                   DayOfWeek = day,
-                  DataTransmissionStart = String.Format("00:{0:00}",start++),
+                  DataTransmissionStart = String.Format("00:{0:00}", start++),
                   DurationHours = 1
                };
                schedule.Add(scheduledEvent);
             }
          }
 
-         // alternate putting devices into the facility
-
          // create devices
+         // alternate putting devices into the facilities
+
          var facilityIndex = 0;
-         for (int nDevice = 1; nDevice <= _numDevices; ++nDevice)
+         for (int nDevice = 1; nDevice <= _options.NumDevices; ++nDevice)
          {
             var facility = _facilities[facilityIndex];
             facilityIndex = ++facilityIndex % _facilities.Count();
             var device = new Device()
             {
                Name = String.Format("Device{0:000}", nDevice),
-               SerialNumber = String.Format("1X{0:00000}", nDevice),
+               SerialNumber = String.Format("{0}{1:00000}",_options.SerialPrefix, nDevice),
                FacilityId = facility.Id,
                Active = true,
             };
@@ -270,7 +325,7 @@ namespace ImportGenerator
 
          foreach (var ws in worksheets)
          {
-            Worksheet worksheet = (Worksheet) ws;
+            Worksheet worksheet = (Worksheet)ws;
             if (worksheet.Name == "Facilities")
             {
                _facilitiesWorksheet = new FacilitiesWorkSheet(worksheet);
@@ -305,31 +360,6 @@ namespace ImportGenerator
          _devicesWorksheet.Init();
       }
 
-      public void Run(string[] args)
-      {
-         CreateData();
-         LoadWorksheetsFromTemplate();
-
-         _devicesWorksheet.AddDevices(_devices);
-         _facilitiesWorksheet.AddFacilities(_facilities);
-
-         foreach (var facility in _facilities)
-         {
-            _facilitiesScheduleWorksheet.AddSchedule(facility.Schedule);
-         }
-
-
-         var ts = DateTime.Now;
-         var fileName = String.Format("{0}-{1:00}-{2:00}-{3:00}-{4:00}-{5:00}.xlsx", ts.Year, ts.Month, ts.Day, ts.Hour, ts.Minute, ts.Second);
-         var path = Directory.GetCurrentDirectory();
-         var filePath = $"{path}/{fileName}";
-
-         File.Delete(filePath);
-         _workbook.SaveAs(filePath);
-
-         // Closing the file
-         _workbook.Close();
-      }
    }
 
 }
