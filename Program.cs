@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -174,10 +175,15 @@ namespace ImportGenerator
       {
          [Option('v', "verbose", Required = false, HelpText = "Set output to verbose messages.")]
          public bool Verbose { get; set; }
+
          [Option('d', "devices", Required = true, HelpText = "Specify number of devices.")]
          public int NumDevices { get; set; }
-         [Option('f', "facilities", Required = true, HelpText = "Specify number of facilities.")]
+
+         [Option('f', "facilities", 
+            Required = true, 
+            HelpText = "Specify number of facilities.")]
          public int NumFacilities { get; set; }
+
          [Option('s', "serial", Required = false, HelpText = "Specify the serial number prefix.")]
          public string SerialPrefix { get; set; } = "1X";
       }
@@ -191,6 +197,22 @@ namespace ImportGenerator
 
       static void Run(Options options)
       {
+         String errors = "";
+         if (options.NumFacilities < 1)
+         {
+            errors += "\nNumber of facilities must be greater than 0.";
+         }
+         if (options.NumDevices < 1)
+         {
+            errors += "\nNumber of devices must be greater than 0.";
+         }
+
+         if (errors.Length != 0)
+         {
+            Console.WriteLine(errors);
+            Environment.Exit(1);
+         }
+
          var program = new Program(options);
          program.Run();
       }
@@ -213,7 +235,8 @@ namespace ImportGenerator
       public void Run()
       {
          var ts = DateTime.Now;
-         var fileName = String.Format("{0}-{1:00}-{2:00}-{3:00}-{4:00}-{5:00}.xlsx", ts.Year, ts.Month, ts.Day, ts.Hour, ts.Minute, ts.Second);
+         //var fileName = String.Format("{0}-{1:00}-{2:00}-{3:00}-{4:00}-{5:00}.xlsx", ts.Year, ts.Month, ts.Day, ts.Hour, ts.Minute, ts.Second);
+         var fileName = String.Format("{0}-{1:00}{2:00}-{3:00}{4:00}{5:00}-F{6}-D{7}.xlsx", ts.Year, ts.Month, ts.Day, ts.Hour, ts.Minute, ts.Second, _options.NumFacilities, _options.NumDevices);
          var path = Directory.GetCurrentDirectory();
          var filePath = $"{path}/{fileName}";
 
