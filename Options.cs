@@ -18,7 +18,7 @@ namespace ImportGenerator
       [Option('s', "serial", Required = false, HelpText = "Specify the serial number prefix.")]
       public string SerialPrefix { get; set; } = "1X";
 
-      [Option('r', "duration", Required = false, HelpText = "Specify duration in hours (>= 0.1).")]
+      [Option('r', "duration", Required = false, HelpText = "Specify duration in hours (>= 0.25).")]
       public double Duration { get; set; } = 1.1;
    }
 }
