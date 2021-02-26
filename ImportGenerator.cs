@@ -19,7 +19,7 @@ namespace ImportGenerator
          var fileName = String.Format("{0}-{1:00}{2:00}-{3:00}{4:00}{5:00}-F{6}-D{7}-R{8}.xlsx", ts.Year, ts.Month, ts.Day, ts.Hour, ts.Minute, ts.Second, _options.NumFacilities, _options.NumDevices,_options.Duration);
          var cwd = Directory.GetCurrentDirectory();
          var filePath = $"{cwd}/{fileName}";
-         var templateFilePath = $"{cwd}/template.xlsx";
+         var templateFilePath = $"{cwd}/Template.xlsx";
 
 
          Console.WriteLine($"Generating import document:");

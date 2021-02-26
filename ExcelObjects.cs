@@ -56,6 +56,8 @@ namespace ImportGenerator
       private const int StateCell = 4;
       private const int ZoneCell = 5;
       private const int ActiveCell = 6;
+      private const int OperatingHoursDlogThrottleSpeed = 7;
+      private const int NonOperatingHoursDlogThrottleSpeed = 8;
 
       private Worksheet _worksheet;
 
@@ -88,6 +90,8 @@ namespace ImportGenerator
             cells[row, StateCell] = facility.State;
             cells[row, ZoneCell] = facility.ZoneId;
             cells[row, ActiveCell] = facility.Active ? "1" : "0";
+            cells[row, OperatingHoursDlogThrottleSpeed] = facility.OperatingHoursDlogThrottleSpeed;
+            cells[row, NonOperatingHoursDlogThrottleSpeed] = facility.NonOperatingHoursDlogThrottleSpeed;
             ++row;
          }
       }
@@ -174,9 +178,7 @@ namespace ImportGenerator
       private void CreateFromTemplate(string templateFilePath)
       {
          Application excel = new Application();
-         var cwd = Directory.GetCurrentDirectory();
-         var fullPath = $"{cwd}\\template.xlsx";
-         _workbook = excel.Workbooks.Open(fullPath);
+         _workbook = excel.Workbooks.Open(templateFilePath);
          var worksheets = _workbook.Worksheets;
 
          foreach (var ws in worksheets)

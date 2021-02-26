@@ -15,6 +15,8 @@ namespace ImportGenerator
       public string ZoneId;
       public bool Active;
       public FacilitySchedule Schedule;
+      public int OperatingHoursDlogThrottleSpeed;
+      public int NonOperatingHoursDlogThrottleSpeed;
    }
 
    public class FacilityScheduledEvent
@@ -74,7 +76,9 @@ namespace ImportGenerator
                City = city,
                State = state,
                ZoneId = timeZone,
-               Active = true
+               Active = true,
+               OperatingHoursDlogThrottleSpeed = 1000,
+               NonOperatingHoursDlogThrottleSpeed = 10000
             };
             Facilities.Add(facility);
 
