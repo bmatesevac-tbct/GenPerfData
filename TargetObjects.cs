@@ -45,83 +45,122 @@ namespace ImportGenerator
       public readonly List<Device> Devices = new List<Device>();
       private readonly Options _options;
 
+      private string[] _states = SourceData.States;
+      private string[] _timeZones = SourceData.TimeZones;
+      private PlaceNameGenerator _placeGenerator = new PlaceNameGenerator();
+
+      private int _timeZoneIndex = 0;
+      private int _stateIndex = 0;
+      private int _nFacilities = 0;
+      private int _nDevices = 0;
+
 
       public TargetObjects(Options options)
       {
          _options = options;
 
-         var states = SourceData.States;
-         var timeZones = SourceData.TimeZones;
-
-         var placeGenerator = new PlaceNameGenerator();
-
-
-         int timeZoneIndex = 0;
-         int stateIndex = 0;
-
-         for (int nFacility = 1; nFacility <= options.NumFacilities; ++nFacility)
+         var facilityGroupSpecs = _options.FacilityGroupSpecifiers;
+         if (facilityGroupSpecs == null)
          {
-            var timeZone = timeZones[timeZoneIndex];
-            timeZoneIndex = ++timeZoneIndex % timeZones.Length;
-
-            var state = states[stateIndex];
-            stateIndex = ++stateIndex % states.Length;
-
-            var city = placeGenerator.GenerateRandomPlaceName();
-
-            var facility = new Facility()
+            for (int nFacility = 0; nFacility < options.NumFacilities; ++nFacility)
             {
-               Id = String.Format("Site{0:000}", nFacility),
-               Name = String.Format("Facility{0:000}", nFacility),
-               City = city,
-               State = state,
-               ZoneId = timeZone,
-               Active = true,
-               OperatingHoursDlogThrottleSpeed = 1000,
-               NonOperatingHoursDlogThrottleSpeed = 10000
-            };
-            Facilities.Add(facility);
+               var facility = CreateFacility();
+               Facilities.Add(facility);
+               facility.Schedule = CreateFacilitySchedule(facility);
+            }
 
-            // create scheduled events
-            var schedule = new FacilitySchedule();
-            facility.Schedule = schedule;
-            int start = 0;
-            for (int day = 1; day <= 7; ++day)
+            // create devices
+            // alternate putting devices into the facilities
+            var facilityIndex = 0;
+            for (int nDevice = 0; nDevice < options.NumDevices; ++nDevice)
             {
-               var scheduledEvent = new FacilityScheduledEvent()
-               {
-
-                  FacilityId = facility.Id,
-                  DayOfWeek = day,
-                  DataTransmissionStart = String.Format("00:{0:00}", start++),
-                  DurationHours = options.Duration
-               };
-               schedule.Add(scheduledEvent);
+               var facility = Facilities[facilityIndex];
+               facilityIndex = ++facilityIndex % Facilities.Count();
+               Devices.Add(CreateDevice(facility));
             }
          }
 
-         // create devices
-         // alternate putting devices into the facilities
-
-         var facilityIndex = 0;
-         for (int nDevice = 1; nDevice <= options.NumDevices; ++nDevice)
+         else
          {
-            var facility = Facilities[facilityIndex];
-            facilityIndex = ++facilityIndex % Facilities.Count();
-            var device = new Device()
+            // distribute based on the facilityGroupSpecs
+            foreach (var facilityGroupSpec in facilityGroupSpecs)
             {
-               Name = String.Format("Device{0:000}", nDevice),
-               SerialNumber = String.Format("{0}{1:00000}", options.SerialPrefix, nDevice),
-               FacilityId = facility.Id,
-               Active = true,
-            };
-            Devices.Add(device);
+               for (int nFacility = 0; nFacility < facilityGroupSpec.NumFacilities; ++nFacility)
+               {
+                  var facility = CreateFacility();
+                  Facilities.Add(facility);
+                  facility.Schedule = CreateFacilitySchedule(facility);
+
+                  // add devices to the facility
+                  for (int nDevice = 0; nDevice < facilityGroupSpec.NumDevices; ++nDevice)
+                  {
+                     Devices.Add(CreateDevice(facility));
+                  }
+               }
+            }
          }
       }
 
+      private Facility CreateFacility()
+      {
+         int nFacility = ++_nFacilities;
+         var timeZone = _timeZones[_timeZoneIndex];
+         _timeZoneIndex = ++_timeZoneIndex % _timeZones.Length;
+
+         var state = _states[_stateIndex];
+         _stateIndex = ++_stateIndex % _states.Length;
+
+         var city = _placeGenerator.GenerateRandomPlaceName();
+
+         var facility = new Facility()
+         {
+            Id = String.Format("Site{0:000}", nFacility),
+            Name = String.Format("Facility{0:000}", nFacility),
+            City = city,
+            State = state,
+            ZoneId = timeZone,
+            Active = true,
+            OperatingHoursDlogThrottleSpeed = 1000,
+            NonOperatingHoursDlogThrottleSpeed = 10000
+         };
+
+         return facility;
+      }
+
+      private FacilitySchedule CreateFacilitySchedule(Facility facility)
+      {
+         var schedule = new FacilitySchedule();
+         int start = 0;
+         for (int day = 1; day <= 7; ++day)
+         {
+            var scheduledEvent = new FacilityScheduledEvent()
+            {
+
+               FacilityId = facility.Id,
+               DayOfWeek = day,
+               DataTransmissionStart = String.Format("00:{0:00}", start++),
+               DurationHours = _options.Duration
+            };
+            schedule.Add(scheduledEvent);
+         }
+         return schedule;
+      }
+
+      private Device CreateDevice(Facility facility)
+      {
+         int nDevice = ++_nDevices;
+         var device = new Device()
+         {
+            Name = String.Format("Device{0:000}", nDevice),
+            SerialNumber = String.Format("{0}{1:00000}", _options.SerialPrefix, nDevice),
+            FacilityId = facility.Id,
+            Active = true,
+         };
+         return device;
+      }
+
    }
-
-
-
-
 }
+
+
+

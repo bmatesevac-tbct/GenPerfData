@@ -16,15 +16,42 @@ namespace ImportGenerator
       public void Run()
       {
          var ts = DateTime.Now;
-         var fileName = String.Format("{0}-{1:00}{2:00}-{3:00}{4:00}{5:00}-F{6}-D{7}-R{8}.xlsx", ts.Year, ts.Month, ts.Day, ts.Hour, ts.Minute, ts.Second, _options.NumFacilities, _options.NumDevices,_options.Duration);
+         var baseFileName = String.Format("{0}-{1:00}{2:00}-{3:00}{4:00}{5:00}", ts.Year, ts.Month, ts.Day, ts.Hour, ts.Minute, ts.Second);
+         var fileName = baseFileName;
          var cwd = Directory.GetCurrentDirectory();
-         var filePath = $"{cwd}/{fileName}";
          var templateFilePath = $"{cwd}/Template.xlsx";
 
+         int numDevices = 0;
+         int numFacilities = 0;
 
          Console.WriteLine($"Generating import document:");
-         Console.WriteLine($" Devices:    {_options.NumDevices}");
-         Console.WriteLine($" Facilities: {_options.NumFacilities}");
+         if (_options.FacilityGroupSpecifiers != null)
+         {
+            Console.WriteLine($" Facility Groups:");
+            foreach (var facilityGroupSpec in _options.FacilityGroupSpecifiers)
+            {
+               numFacilities += facilityGroupSpec.NumFacilities;
+               numDevices += facilityGroupSpec.NumDevices * facilityGroupSpec.NumFacilities;
+               Console.WriteLine($"   {facilityGroupSpec.NumFacilities} @ {facilityGroupSpec.NumDevices}");
+               fileName += $"-{facilityGroupSpec.NumFacilities}@{facilityGroupSpec.NumDevices}";
+            }
+         }
+         else
+         {
+            fileName += $"-F{_options.NumFacilities}-D{_options.NumDevices}-R{_options.Duration}";
+            numDevices = _options.NumDevices;
+            numFacilities = _options.NumFacilities;
+         }
+
+         if (_options.OutputFileName != null)
+         {
+            fileName = _options.OutputFileName;
+         }
+
+         var filePath = $"{cwd}/{fileName}.xlsx";
+
+         Console.WriteLine($" Devices:    {numDevices}");
+         Console.WriteLine($" Facilities: {numFacilities}");
          Console.WriteLine($" S/N Prefix: {_options.SerialPrefix}");
          Console.WriteLine($" Duration:   {_options.Duration}");
          Console.WriteLine($" Output:     {filePath}");
