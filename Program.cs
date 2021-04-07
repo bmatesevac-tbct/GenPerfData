@@ -24,26 +24,11 @@ namespace ImportGenerator
 
          Options options = new Options();
          parser.ParseArguments<Options>(args)
-            .WithParsed(o=> options = o);
+            .WithParsed(o => options = o);
 
-         if (options.FacilityGroupSpecifiers == null)
-         {
-            if (options.NumFacilities < 1)
-            {
-               help.Write("\nNumber of facilities must be greater than 0.");
-            }
-            if (options.NumDevices < 1)
-            {
-               help.Write("\nNumber of devices must be greater than 0.");
-            }
-         }
-         else
-         {
-            if (options.NumFacilities != 0)
-               help.Write("\nOptions -f and -c and mutually exclusive.");
-            if (options.NumDevices != 0)
-               help.Write("\nOptions -d and -c and mutually exclusive.");
-         }
+         var anyErrors = Options.Validate(options);
+         if (anyErrors != String.Empty)
+            help.Write(anyErrors);
 
          var result = help.ToString();
          if (result.Length != 0)
