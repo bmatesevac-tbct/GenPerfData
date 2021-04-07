@@ -26,13 +26,23 @@ namespace ImportGenerator
          parser.ParseArguments<Options>(args)
             .WithParsed(o=> options = o);
 
-         if (options.NumFacilities < 1)
+         if (options.FacilityGroupSpecifiers == null)
          {
-            help.Write("\nNumber of facilities must be greater than 0.");
+            if (options.NumFacilities < 1)
+            {
+               help.Write("\nNumber of facilities must be greater than 0.");
+            }
+            if (options.NumDevices < 1)
+            {
+               help.Write("\nNumber of devices must be greater than 0.");
+            }
          }
-         if (options.NumDevices < 1)
+         else
          {
-            help.Write("\nNumber of devices must be greater than 0.");
+            if (options.NumFacilities != 0)
+               help.Write("\nOptions -f and -c and mutually exclusive.");
+            if (options.NumDevices != 0)
+               help.Write("\nOptions -d and -c and mutually exclusive.");
          }
 
          var result = help.ToString();
